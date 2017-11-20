@@ -1,0 +1,11 @@
+{% extends "index.html" %} {% block catalogcontent %}
+<br>
+{% for item in catalog %} 
+<a href="{{url_for('CatalogItemsHander',catagoryname=item.cat_name)}}">{{item.cat_name}}</a>
+{% endfor %} 
+<hr>
+{% block itemcontent %}
+{% endblock %}
+{% for catitem in catalogitems %}
+<h4>{{catitem.item_name}}<span>({{catitem.catalog.cat_name}})</span></h4>
+{% endfor %}{% endblock %}
