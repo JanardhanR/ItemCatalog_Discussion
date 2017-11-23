@@ -1,11 +1,7 @@
 {% extends "index.html" %} {% block catalogcontent %}
-<br>
-{% for item in catalog %} 
+<br> {% for item in catalog %}
 <a href="{{url_for('CatalogItemsHander',catagoryname=item.cat_name)}}">{{item.cat_name}}</a>
-{% endfor %} 
-<hr>
-{% block itemcontent %}
-{% endblock %}
-{% for catitem in catalogitems %}
-<a href="{{url_for('ShowItemHander',catagoryname=catitem.catalog.cat_name, itemname=catitem.item_name)}}">{{catitem.item_name}}</a>
-{% endfor %}{% endblock %}
+{% endfor %}
+<hr> {% block itemcontent %} {% endblock %} {% for catitem in catalogitems %}
+<a id="iteminfo" href="{{url_for('ShowItemHander',catagoryname=catitem.catalog.cat_name,itemid=catitem.item_id)}}">{{catitem.item_name}}</a>
+{% endfor %}{% endblock %} 

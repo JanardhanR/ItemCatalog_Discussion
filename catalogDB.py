@@ -40,6 +40,10 @@ def getLatestItems():
                 .limit(count)
     return catitems
 
+def getCatalogItems():
+    catalogitems = db_session.query(CatalogItem).all()
+    return catalogitems
+
 def addItem(item_name, item_desc, cat_id):
     catitem = CatalogItem()
     catitem.item_name = item_name
@@ -60,6 +64,11 @@ def getItemsByCat(cat_name):
     filter(Catalog.cat_name == cat_name)
     return catitems
 
+def getItemById(item_id):
+    catitem = db_session.query(CatalogItem). \
+    filter(CatalogItem.item_id == item_id).one()
+    return catitem
+
 def createUser(login_session):
     newUser = User(name=login_session['username'], \
                    email=login_session['email'], \
@@ -70,6 +79,16 @@ def createUser(login_session):
            .filter_by(email=login_session['email']).one()
     return user.id
 
+def editItem(item_id,item_name, item_desc, cat_id):
+    try:
+        catitem = getItemById(item_id)
+        catitem.item_name = item_name
+        catitem.description = item_desc
+        catitem.cat_id = cat_id
+        db_session.commit()
+    except:
+        return False
+    return True
 
 def getUserInfo(user_id):
     user = db_session.query(User).filter_by(id=user_id).one()

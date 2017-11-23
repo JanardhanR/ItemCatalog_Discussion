@@ -14,7 +14,8 @@ import httplib2
 import json
 from catalogDB import SetupDB, getCatalog, \
     getLatestItems, getUserID, createUser, \
-    addItem, getItemByName, getItemsByCat
+    addItem, getItemByName, getItemsByCat, \
+    getItemById, getCatalogItems, editItem
 
 
 app = Flask(__name__)
@@ -59,25 +60,43 @@ def CatalogItemsHander(catagoryname):
 
     catalog = getCatalog()
     catalogitems = getItemsByCat(catagoryname)
-    if not IsUserLoggedIn():
-        return render_template("catalogitems.html", catalog=catalog, \
-            catalogitems=catalogitems, \
-            session=login_session)
+    IsUserLoggedIn()
+    return render_template("catalogitems.html", catalog=catalog, \
+        catalogitems=catalogitems, \
+        session=login_session)
+
+
+#Show individual item in particular category - unlogged/logged users
+#http://localhost:8000/catalog/Snowboarding/Snowboard
+@app.route('/catalog/<string:catagoryname>/<int:itemid>', methods=['GET'])
+def ShowItemHander(catagoryname,itemid):
+    print "Show individual item in particular category - unlogged/logged users"
+
+    catitem = getItemById(itemid)
+    print 'Item Id %s ' % itemid
+    if catitem:
+        return render_template("showitem.html", \
+            catagoryname=catagoryname, \
+            itemname=catitem.item_name, \
+            itemid=catitem.item_id, \
+            itemdesc=catitem.description)
     else:
-        return render_template("catalogitems.html", catalog=catalog, \
-            catalogitems=catalogitems, \
-            session=login_session)
+        #TO-DO
+        print ("error getting catitem for id %s" % itemid)
+        redirect("/")
 
 #Edit a item  - logged users only
 #http://localhost:8000/catalog/Snowboard/edit (logged in)
-@app.route('/catalog/<string:itemname>/edit', methods=['GET'])
-def EditItemHandler(itemname):
+@app.route('/catalog/<int:itemid>/edit', methods=['GET', 'POST'])
+def EditItemHandler(itemid):
+
+    #TO-DO
     if not IsUserLoggedIn():
         return redirect('/catalog')
     else:
         print 'reached edit here..'
         if request.method == 'GET':
-            catitem = getItemByName(itemname)
+            catitem = getItemById(itemid)
             if catitem:
                 catalog = getCatalog()
                 return render_template("edititem.html", \
@@ -87,22 +106,15 @@ def EditItemHandler(itemname):
                 # just in case handle it
                 return redirect('/catalog')
         else:
-            # item_name = request.form['ItemName']
-            # item_desc = request.form['ItemDesc']
-            # cat_id = request.form['ItemCat']
-            # addItem(item_name, item_desc, cat_id)
+            #for now redirect to root..
+            item_name = request.form['ItemName']
+            item_desc = request.form['ItemDesc']
+            cat_id = request.form['ItemCat']
+            editItem(itemid,item_name, item_desc, cat_id)
             return redirect('/catalog')
 
-
-#Show individual item in particular category - unlogged/logged users
-#http://localhost:8000/catalog/Snowboarding/Snowboard
-@app.route('/catalog/<string:catagoryname>/<string:itemname>', methods=['GET'])
-def ShowItemHander(catagoryname,itemname):
-    print "Show individual item in particular category - unlogged/logged users"
-
-    return render_template("showitem.html", \
-    catagoryname=catagoryname, \
-    itemname=itemname)
+            
+            return redirect('/catalog')
 
 #Add a item  - logged users only
 #http://localhost:8000/catalog/Snowboard/Add (logged in)
@@ -124,17 +136,22 @@ def AddItemHandler():
 
 #Delete a item  - logged users only
 #http://localhost:8000/catalog/Snowboard/delete (logged in)
-@app.route('/catalog/<string:itemname>/delete', methods=['GET'])
-def DeleteItemHander(itemname):
-    print "Delete item %s" % itemname
+@app.route('/catalog/<int:itemid>/delete', methods=['GET'])
+def DeleteItemHander(itemid):
+    print "Delete item %s" % itemid
+    #TO-DO
     return render_template("deleteitem.html")
 
 #Catalog JSON - public
 #http://localhost:8000/catalog.json
 @app.route('/catalog.json', methods=['GET'])
 def GetCatalog():
-    return "GetCatalog /catalog.JSON"
-
+    catalogitems = getCatalogItems()
+    if not IsUserLoggedIn():
+        redirect("/")
+    else:
+        items = getCatalogItems()
+        return jsonify(json_list=[i.serialize for i in items])
 
 # (Receive auth_code by HTTPS POST)
 @app.route('/gconnect',methods=['POST'])
@@ -189,7 +206,6 @@ def gconnect():
     response = make_response(json.dumps("Logged in"), 200)
     response.headers['Content-Type'] = 'application/json'
     return response
-
 
 # (Receive auth_code by HTTPS POST)
 @app.route('/gdisconnect', methods=['GET'])
